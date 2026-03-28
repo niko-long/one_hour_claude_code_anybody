@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 实操指南</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FDFDFC;
+  --bg-alt: #F7F6F3;
+  --text: #37352F;
+  --text-2: #6B6B6B;
+  --text-3: #9B9B9B;
+  --border: #E8E6E3;
+  --accent: #C65D24;
+  --accent-bg: #FDF4EE;
+  --green: #448361;
+  --green-bg: #EFF6F1;
+  --blue: #4A7FB5;
+  --blue-bg: #EDF3F9;
+  --term-bg: #1C1C1C;
+  --term-text: #CCCCCC;
+  --term-green: #87C38A;
+  --term-yellow: #E5C07B;
+  --term-blue: #7CAFC2;
+  --term-comment: #6A9955;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased}
+.container{max-width:740px;margin:0 auto;padding:0 24px}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(253,253,252,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:740px;margin:0 auto;padding:0 24px;display:flex;align-items:center;height:50px;gap:6px;overflow-x:auto;scrollbar-width:none}
+.nav-inner::-webkit-scrollbar{display:none}
+.nav-brand{font-family:'Source Serif 4',serif;font-weight:700;font-size:15px;color:var(--text);margin-right:16px;flex-shrink:0;white-space:nowrap}
+.nav-link{flex-shrink:0;padding:4px 12px;border-radius:6px;font-size:13px;color:var(--text-2);text-decoration:none;transition:all .15s;white-space:nowrap}
+.nav-link:hover{background:var(--bg-alt);color:var(--text)}
+.nav-link.active{background:var(--text);color:white}
+.progress-bar{position:fixed;top:50px;left:0;height:2px;background:var(--accent);z-index:99;transition:width .1s;border-radius:0 2px 2px 0}
+.page-header{padding:100px 0 48px;border-bottom:1px solid var(--border)}
+.page-header h1{font-family:'Source Serif 4',serif;font-size:clamp(30px,5vw,42px);font-weight:700;line-height:1.3;letter-spacing:-.5px;margin-bottom:12px}
+.page-header .subtitle{font-size:16px;color:var(--text-2);max-width:560px;margin-bottom:20px}
+.meta-row{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;color:var(--text-3)}
+.meta-row span{display:flex;align-items:center;gap:4px}
+article{padding:48px 0 64px}
+article h2{font-family:'Source Serif 4',serif;font-size:26px;font-weight:700;margin:56px 0 8px;padding-top:24px;line-height:1.35;border-top:1px solid var(--border)}
+article h2:first-child{border-top:none;margin-top:0}
+article h2 .num{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent);margin-right:6px;font-weight:500}
+article h3{font-size:18px;font-weight:700;margin:32px 0 10px;color:var(--text)}
+article p{margin:10px 0;color:var(--text)}
+article p+p{margin-top:12px}
+article ul,article ol{margin:10px 0 10px 20px}
+article li{margin-bottom:6px;color:var(--text)}
+article a{color:var(--accent);text-decoration:underline;text-decoration-color:rgba(198,93,36,.3);text-underline-offset:2px}
+article a:hover{text-decoration-color:var(--accent)}
+code{font-family:'JetBrains Mono',monospace;background:var(--bg-alt);padding:2px 6px;border-radius:4px;font-size:13.5px;color:#C7501A}
+.term{background:var(--term-bg);border-radius:10px;margin:16px 0;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.term-bar{display:flex;align-items:center;padding:10px 14px;gap:7px;background:#262626}
+.term-dot{width:11px;height:11px;border-radius:50%}
+.term-dot.r{background:#FF5F57}.term-dot.y{background:#FEBC2E}.term-dot.g{background:#28C840}
+.term-title{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#666}
+.term pre{padding:18px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.75;color:var(--term-text);overflow-x:auto;tab-size:2}
+.term .c{color:var(--term-comment)}.term .g{color:var(--term-green)}.term .y{color:var(--term-yellow)}.term .b{color:var(--term-blue)}.term .p{color:#666;user-select:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0}
+.card{background:white;border:1px solid var(--border);border-radius:10px;padding:20px;transition:box-shadow .2s}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.card h4{font-size:15px;font-weight:700;margin-bottom:4px}
+.card p{font-size:13.5px;color:var(--text-2);line-height:1.6}
+.card .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-top:8px}
+.tag-a{background:var(--accent-bg);color:var(--accent)}.tag-b{background:var(--blue-bg);color:var(--blue)}.tag-g{background:var(--green-bg);color:var(--green)}
+.tbl-wrap{overflow-x:auto;margin:16px 0;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px;background:white}
+th{background:var(--bg-alt);font-weight:600;text-align:left;padding:12px 16px;font-size:13px;color:var(--text-2)}
+td{padding:12px 16px;border-top:1px solid var(--border);vertical-align:top}
+.handson{border:1.5px solid var(--accent);border-radius:12px;padding:24px 28px;margin:24px 0;background:var(--accent-bg)}
+.handson-tag{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.handson h4{font-size:17px;font-weight:700;margin-bottom:8px}
+.handson p,.handson li{font-size:14.5px;color:#5A4A3A}
+.handson ol,.handson ul{margin:8px 0 8px 18px}
+.handson-time{font-size:12px;color:var(--accent);font-weight:600;margin-top:10px}
+.note{border-radius:10px;padding:16px 20px;margin:16px 0;font-size:14px;display:flex;gap:12px;align-items:flex-start}
+.note-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.note p{margin:0;line-height:1.6}
+.note-info{background:var(--blue-bg);color:#355D80}
+.note-tip{background:var(--green-bg);color:#2E5940}
+.note-warn{background:#FFF8E6;color:#7A6520}
+.discuss{background:var(--bg-alt);border-radius:10px;padding:18px 22px;margin:20px 0}
+.discuss-label{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.discuss p{font-size:14px;color:var(--text-2)}
+.timeline{margin:16px 0;padding-left:28px;position:relative}
+.timeline::before{content:'';position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:var(--border);border-radius:2px}
+.tl-item{position:relative;margin-bottom:18px}
+.tl-item::before{content:'';position:absolute;left:-22px;top:7px;width:10px;height:10px;border-radius:50%;background:white;border:2.5px solid var(--accent)}
+.tl-item strong{font-size:14px;display:block;margin-bottom:2px}
+.tl-item p{font-size:13.5px;color:var(--text-2);margin:0}
+.tl-item .prompt{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--accent);background:var(--accent-bg);padding:6px 12px;border-radius:6px;margin-top:4px;display:inline-block}
+footer{text-align:center;padding:48px 24px;color:var(--text-3);font-size:13px;border-top:1px solid var(--border)}
+footer a{color:var(--accent);text-decoration:none}
+.reveal{opacity:0;transform:translateY(14px);transition:all .45s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(max-width:640px){
+  .page-header{padding:80px 0 36px}
+  article h2{font-size:22px}
+  .cards{grid-template-columns:1fr}
+  .handson{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+<div class="nav-inner">
+  <span class="nav-brand">Claude Code Workshop</span>
+  <a href="#shell" class="nav-link">Shell</a>
+  <a href="#git" class="nav-link">Git</a>
+  <a href="#claude" class="nav-link">Claude</a>
+  <a href="#setup" class="nav-link">安装</a>
+  <a href="#basics" class="nav-link">基础</a>
+  <a href="#claudemd" class="nav-link">CLAUDE.md</a>
+  <a href="#concepts" class="nav-link">概念</a>
+  <a href="#prompt" class="nav-link">Prompt</a>
+  <a href="#project" class="nav-link">实战</a>
+  <a href="#deep" class="nav-link">进阶</a>
+  <a href="#end" class="nav-link">资源</a>
+</div>
+</nav>
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="container">
+
+<header class="page-header">
+<h1>从终端到项目：Claude Code 实操指南</h1>
+<p class="subtitle">覆盖 Shell 基础、Git 版本控制、前后端分离概念、Prompt 技巧，以及 Claude Code 的完整工作流。面向有兴趣尝试 AI 辅助开发的朋友。</p>
+<div class="meta-row">
+  <span>📅 2026 年 3 月</span>
+  <span>⏱️ 约 60 分钟</span>
+  <span>💻 macOS</span>
+</div>
+</header>
+
+<article>
+
+<!-- ========== SHELL ========== -->
+<h2 id="shell"><span class="num">01</span> Shell 基础</h2>
+
+<h3>什么是 Shell</h3>
+<p>Shell 是操作系统提供的命令行界面，用户通过文本命令与系统交互。macOS 默认的 Shell 是 <strong>zsh</strong>。图形界面能做的事情，Shell 几乎都能做，而且在批量操作、自动化、远程管理等场景下效率更高。</p>
+
+<h3>打开终端</h3>
+<p>macOS 上有两种常用方式：</p>
+<ul>
+  <li><strong>Spotlight 搜索：</strong> 按 <code>Cmd + Space</code>，输入 "Terminal"，回车</li>
+  <li><strong>Finder：</strong> 应用程序 → 实用工具 → 终端</li>
+</ul>
+<p>也可以使用第三方终端应用如 <a href="https://iterm2.com" target="_blank">iTerm2</a>，功能更丰富。</p>
+
+<h3>常用命令</h3>
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">Terminal — zsh</span></div>
+<pre><span class="c"># 查看当前所在目录</span>
+<span class="p">$ </span><span class="g">pwd</span>
+/Users/yourname
+
+<span class="c"># 列出当前目录的文件和文件夹</span>
+<span class="p">$ </span><span class="g">ls</span>
+<span class="p">$ </span><span class="g">ls</span> <span class="y">-la</span>          <span class="c"># 包含隐藏文件和详细信息</span>
+
+<span class="c"># 切换目录</span>
+<span class="p">$ </span><span class="g">cd</span> ~/Desktop     <span class="c"># 进入桌面</span>
+<span class="p">$ </span><span class="g">cd</span> my-project    <span class="c"># 进入子目录</span>
+<span class="p">$ </span><span class="g">cd</span> ..             <span class="c"># 返回上一级</span>
+<span class="p">$ </span><span class="g">cd</span> ~              <span class="c"># 回到用户主目录</span>
+
+<span class="c"># 创建目录和文件</span>
+<span class="p">$ </span><span class="g">mkdir</span> my-project  <span class="c"># 创建文件夹</span>
+<span class="p">$ </span><span class="g">touch</span> index.html  <span class="c"># 创建空文件</span>
+
+<span class="c"># 查看文件内容</span>
+<span class="p">$ </span><span class="g">cat</span> README.md     <span class="c"># 输出整个文件</span>
+<span class="p">$ </span><span class="g">head</span> <span class="y">-20</span> app.py   <span class="c"># 只看前 20 行</span>
+
+<span class="c"># 删除（谨慎使用）</span>
+<span class="p">$ </span><span class="g">rm</span> file.txt       <span class="c"># 删除文件</span>
+<span class="p">$ </span><span class="g">rm</span> <span class="y">-r</span> folder/     <span class="c"># 删除文件夹及其内容</span></pre>
+</div>
+
+<div class="note note-tip">
+<span class="note-icon">💡</span>
+<p>按 <strong>Tab</strong> 键可以自动补全路径和文件名。按 <strong>↑</strong> 可以翻出上一条命令。</p>
+</div>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #1</div>
+<h4>终端基本操作</h4>
+<ol>
+  <li>打开终端，运行 <code>pwd</code> 查看当前目录</li>
+  <li>用 <code>cd ~/Desktop</code> 切换到桌面</li>
+  <li>用 <code>mkdir workshop-demo</code> 创建一个文件夹</li>
+  <li>用 <code>cd workshop-demo</code> 进入，再用 <code>ls -la</code> 查看</li>
+</ol>
+<div class="handson-time">⏱️ 3 分钟</div>
+</div>
+
+<!-- ========== GIT ========== -->
+<h2 id="git"><span class="num">02</span> Git 与版本控制</h2>
+
+<h3>为什么需要版本控制</h3>
+<p>版本控制系统记录文件的每一次变更。在项目开发中，它解决几个核心问题：</p>
+<ul>
+  <li><strong>回滚：</strong> 改坏了可以退回到任意历史版本</li>
+  <li><strong>协作：</strong> 多人同时修改代码，合并变更</li>
+  <li><strong>追溯：</strong> 每一行代码是谁、什么时候、为什么改的</li>
+  <li><strong>分支：</strong> 在不影响主线的情况下开发新功能</li>
+</ul>
+<p>Git 是目前最主流的版本控制工具。GitHub、GitLab 等平台提供基于 Git 的远程托管服务。</p>
+
+<h3>在 AI 辅助开发中，Git 尤其重要</h3>
+<p>当 Claude Code 直接修改文件时，Git 是安全网。如果 AI 生成的代码有问题，可以用 <code>git diff</code> 查看改了什么，用 <code>git checkout</code> 撤销。没有版本控制的情况下让 AI 改代码，风险较高。</p>
+
+<h3>基本工作流</h3>
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">Terminal — zsh</span></div>
+<pre><span class="c"># 检查是否安装了 Git</span>
+<span class="p">$ </span><span class="g">git</span> <span class="y">--version</span>
+
+<span class="c"># 如果没有，macOS 会提示安装 Xcode Command Line Tools</span>
+<span class="p">$ </span><span class="g">xcode-select</span> <span class="y">--install</span>
+
+<span class="c"># 初始化一个 Git 仓库</span>
+<span class="p">$ </span><span class="g">cd</span> my-project
+<span class="p">$ </span><span class="g">git</span> init
+
+<span class="c"># 查看当前状态</span>
+<span class="p">$ </span><span class="g">git</span> status
+
+<span class="c"># 查看具体改了什么</span>
+<span class="p">$ </span><span class="g">git</span> diff
+
+<span class="c"># 暂存 → 提交</span>
+<span class="p">$ </span><span class="g">git</span> add .
+<span class="p">$ </span><span class="g">git</span> commit <span class="y">-m</span> <span class="b">"add user auth module"</span>
+
+<span class="c"># 查看提交历史</span>
+<span class="p">$ </span><span class="g">git</span> log <span class="y">--oneline</span>
+
+<span class="c"># 撤销未提交的修改</span>
+<span class="p">$ </span><span class="g">git</span> checkout <span class="y">--</span> .
+
+<span class="c"># 分支操作</span>
+<span class="p">$ </span><span class="g">git</span> branch feature/new-api
+<span class="p">$ </span><span class="g">git</span> checkout feature/new-api
+<span class="p">$ </span><span class="g">git</span> checkout main
+<span class="p">$ </span><span class="g">git</span> merge feature/new-api</pre>
+</div>
+
+<div class="note note-info">
+<span class="note-icon">📌</span>
+<p>建议在让 Claude Code 修改代码之前，先确保工作区是干净的（<code>git status</code> 无未提交变更）。这样如果 AI 改出问题，可以一键回退。</p>
+</div>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #2</div>
+<h4>初始化一个 Git 仓库</h4>
+<ol>
+  <li>进入 <code>workshop-demo</code> 目录</li>
+  <li>运行 <code>git init</code></li>
+  <li>创建文件：<code>echo "# My Project" > README.md</code></li>
+  <li><code>git add README.md</code> → <code>git commit -m "initial commit"</code></li>
+  <li><code>git log --oneline</code> 查看记录</li>
+</ol>
+<div class="handson-time">⏱️ 3 分钟</div>
+</div>
+
+<!-- ========== CLAUDE 简介 ========== -->
+<h2 id="claude"><span class="num">03</span> Claude 产品概览</h2>
+
+<h3>Claude 是什么</h3>
+<p>Claude 是 Anthropic 开发的大语言模型系列。当前模型家族为 Claude 4.6，包含三个层级：</p>
+
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>模型</th><th>定位</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td><strong>Opus</strong></td><td>最强推理能力</td><td>复杂架构设计、深度分析</td></tr>
+<tr><td><strong>Sonnet</strong></td><td>性能与成本平衡</td><td>日常编码、文档生成（默认）</td></tr>
+<tr><td><strong>Haiku</strong></td><td>快速响应、低成本</td><td>简单任务、批量处理</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>产品形态</h3>
+<div class="cards">
+<div class="card">
+  <h4>claude.ai</h4>
+  <p>网页/移动端聊天界面，支持文件上传、联网搜索、Artifacts</p>
+  <span class="tag tag-b">通用对话</span>
+</div>
+<div class="card">
+  <h4>Claude Code</h4>
+  <p>终端中的 AI 编码代理，读取代码库、修改文件、执行命令</p>
+  <span class="tag tag-a">本文重点</span>
+</div>
+<div class="card">
+  <h4>Claude API</h4>
+  <p>开发者接口，集成到自有产品中，按 token 计费</p>
+  <span class="tag tag-b">开发集成</span>
+</div>
+</div>
+
+<h3>订阅</h3>
+<p>Claude Code 需要付费订阅。Pro（$20/月）包含访问权限，每 5 小时有使用限额。Max（$100/月起）适合高频使用。也可以通过 Console 按 API 用量付费。</p>
+
+<!-- ========== 安装 ========== -->
+<h2 id="setup"><span class="num">04</span> 安装 Claude Code</h2>
+
+<h3>系统要求</h3>
+<ul>
+  <li>macOS 13 (Ventura) 及以上</li>
+  <li>终端（系统自带即可）</li>
+  <li>Git（推荐）</li>
+  <li>Node.js 不是必须的（原生安装器零依赖）</li>
+</ul>
+
+<h3>安装</h3>
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">Terminal — zsh</span></div>
+<pre><span class="c"># 原生安装器（推荐，零依赖，自动更新）</span>
+<span class="p">$ </span><span class="g">curl</span> <span class="y">-fsSL</span> <span class="b">https://claude.ai/install.sh</span> | <span class="g">sh</span>
+
+<span class="c"># 或 Homebrew（需手动更新）</span>
+<span class="p">$ </span><span class="g">brew</span> install <span class="y">--cask</span> claude-code
+
+<span class="c"># 验证</span>
+<span class="p">$ </span><span class="g">claude</span> <span class="y">--version</span></pre>
+</div>
+
+<h3>认证</h3>
+<p>首次运行 <code>claude</code> 时，终端会打开浏览器进入登录页面。完成授权后回到终端即可。凭证保存在 <code>~/.claude/</code>，后续不需重复登录。</p>
+
+<h3>故障排查</h3>
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">Terminal — zsh</span></div>
+<pre><span class="p">$ </span><span class="g">claude</span> doctor           <span class="c"># 自动诊断</span>
+<span class="p">$ </span><span class="g">source</span> ~/.zshrc         <span class="c"># command not found 时重新加载配置</span></pre>
+</div>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #3</div>
+<h4>安装并启动 Claude Code</h4>
+<ol>
+  <li>运行安装命令</li>
+  <li><code>claude --version</code> 确认版本号</li>
+  <li>运行 <code>claude</code>，完成浏览器认证</li>
+  <li>看到欢迎信息即安装成功</li>
+</ol>
+<div class="handson-time">⏱️ 5 分钟</div>
+</div>
+
+<!-- ========== 基础操作 ========== -->
+<h2 id="basics"><span class="num">05</span> Claude Code 基础操作</h2>
+
+<h3>启动位置</h3>
+<p>Claude Code 启动时会扫描当前目录的文件结构，因此需要先 <code>cd</code> 到项目根目录再启动。</p>
+
+<h3>斜杠命令</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>命令</th><th>作用</th><th>场景</th></tr></thead>
+<tbody>
+<tr><td><code>/help</code></td><td>查看所有命令</td><td>不确定时</td></tr>
+<tr><td><code>/clear</code></td><td>清空对话</td><td>切换任务</td></tr>
+<tr><td><code>/cost</code></td><td>查看 token 消耗</td><td>成本监控</td></tr>
+<tr><td><code>/model</code></td><td>切换模型</td><td>按任务复杂度选模型</td></tr>
+<tr><td><code>/compact</code></td><td>压缩上下文</td><td>长对话快满时</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>交互方式</h3>
+<div class="cards">
+<div class="card"><h4>理解代码</h4><p>"概述一下这个项目的架构"</p></div>
+<div class="card"><h4>生成代码</h4><p>"写一个函数把 JSON 转成 CSV"</p></div>
+<div class="card"><h4>修改代码</h4><p>"把日志模块换成 structlog"</p></div>
+<div class="card"><h4>执行 & 调试</h4><p>"运行测试，分析失败原因并修复"</p></div>
+</div>
+
+<div class="note note-warn">
+<span class="note-icon">⚠️</span>
+<p>Claude Code 修改文件前会显示 diff 并请求确认。建议始终检查 diff 内容再接受。</p>
+</div>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #4</div>
+<h4>用 Claude Code 读懂一个项目</h4>
+<ol>
+  <li>进入项目目录，运行 <code>claude</code></li>
+  <li>输入：<em>"这个项目的文件结构是怎样的？"</em></li>
+  <li>输入：<em>"如果要添加一个 CSV 读取功能，你会怎么组织代码？先说方案不要直接写。"</em></li>
+  <li>运行 <code>/cost</code></li>
+</ol>
+<div class="handson-time">⏱️ 5 分钟</div>
+</div>
+
+<!-- ========== CLAUDE.md ========== -->
+<h2 id="claudemd"><span class="num">06</span> CLAUDE.md：项目级上下文</h2>
+
+<h3>作用</h3>
+<p>CLAUDE.md 放在项目根目录，Claude Code 每次启动时自动读取。它的作用类似于给新成员写的 onboarding 文档，告诉 Claude 项目的构建命令、代码规范、架构约定等。</p>
+
+<h3>内容建议</h3>
+<p>重点写 Claude 容易搞错的信息：构建命令、命名规范、技术选型约束、目录结构。</p>
+
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">CLAUDE.md</span></div>
+<pre><span class="y">## 项目简介</span>
+订单管理 API，FastAPI + PostgreSQL + SQLAlchemy
+
+<span class="y">## 常用命令</span>
+- make dev     → 启动开发服务器 (port 8000)
+- make test    → pytest
+- make lint    → ruff check
+
+<span class="y">## 架构</span>
+- src/routes/   → API 路由，按业务模块分文件
+- src/models/   → SQLAlchemy 模型
+- src/schemas/  → Pydantic schema
+
+<span class="y">## 规范</span>
+- 类型注解必须，不使用 Any
+- Commit message 用英文祈使句
+- 环境变量通过 .env 管理，不硬编码</pre>
+</div>
+
+<h3>分层与忽略</h3>
+<p>Monorepo 中可以在子目录放各自的 CLAUDE.md，按层级加载。<code>.claudeignore</code> 文件（类似 .gitignore）可以排除 <code>node_modules/</code>、<code>.env</code> 等。建议将 CLAUDE.md 提交到 Git。</p>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #5</div>
+<h4>生成 CLAUDE.md</h4>
+<ol>
+  <li>在 Claude Code 中输入：<em>"根据当前项目结构，帮我生成一份 CLAUDE.md"</em></li>
+  <li>检查并修改生成内容</li>
+  <li><code>/clear</code> 后重新启动 <code>claude</code>，测试是否生效</li>
+</ol>
+<div class="handson-time">⏱️ 5 分钟</div>
+</div>
+
+<!-- ========== 前后端概念 ========== -->
+<h2 id="concepts"><span class="num">07</span> 前后端分离与项目结构</h2>
+
+<h3>前后端分离</h3>
+<p>现代 Web 应用通常将前端和后端分开开发和部署。</p>
+
+<div class="cards">
+<div class="card">
+  <h4>前端 (Frontend)</h4>
+  <p>用户在浏览器中看到和交互的部分。HTML/CSS/JS，React、Vue 等框架。负责界面渲染。</p>
+  <span class="tag tag-b">浏览器端</span>
+</div>
+<div class="card">
+  <h4>后端 (Backend)</h4>
+  <p>运行在服务器上，处理业务逻辑、数据存储、权限校验。Python、Node.js、Go 等。</p>
+  <span class="tag tag-g">服务器端</span>
+</div>
+<div class="card">
+  <h4>API</h4>
+  <p>前后端之间的通信接口。前端通过 HTTP 请求获取数据，后端返回 JSON。</p>
+  <span class="tag tag-a">连接层</span>
+</div>
+</div>
+
+<p>好处是前后端可以独立开发、独立部署、独立扩展，通过 API 契约协作。</p>
+
+<h3>典型项目结构</h3>
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">项目结构示例</span></div>
+<pre><span class="b">my-app/</span>
+├── <span class="b">frontend/</span>           <span class="c"># 前端</span>
+│   ├── src/
+│   │   ├── App.jsx
+│   │   └── components/
+│   ├── package.json
+│   └── vite.config.js
+├── <span class="b">backend/</span>            <span class="c"># 后端</span>
+│   ├── src/
+│   │   ├── main.py
+│   │   ├── routes/
+│   │   └── models/
+│   ├── tests/
+│   └── pyproject.toml
+├── <span class="y">CLAUDE.md</span>
+├── <span class="y">.gitignore</span>
+└── <span class="y">README.md</span></pre>
+</div>
+
+<div class="note note-info">
+<span class="note-icon">📌</span>
+<p>初学者不必一开始就搭建完整的前后端分离架构。可以从一个纯后端 API 或纯前端页面开始，理解基本流程后再组合。</p>
+</div>
+
+<!-- ========== PROMPT 技巧 ========== -->
+<h2 id="prompt"><span class="num">08</span> Prompt 技巧与项目管理</h2>
+
+<h3>明确技术栈</h3>
+<p>在项目开始时明确告诉 Claude 使用的技术栈，避免它自行选择不合适的工具。</p>
+
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">对比</span></div>
+<pre><span class="c"># ❌ 模糊</span>
+<span class="g">"帮我做一个 Web 应用"</span>
+
+<span class="c"># ✅ 明确</span>
+<span class="g">"用 FastAPI 做后端，SQLite 做数据库，</span>
+<span class="g"> Pydantic 做数据校验。不需要前端，</span>
+<span class="g"> 只提供 REST API。Python 3.12。"</span></pre>
+</div>
+
+<h3>让 Claude 反问你</h3>
+<p>不确定技术方案时，可以让 Claude 扮演顾问角色，通过提问帮你理清需求。这对非专业开发者尤其有效。</p>
+
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">Claude Code</span></div>
+<pre><span class="g">"我想做一个内部用的数据看板，展示销售数据。</span>
+<span class="g"> 我不确定应该用什么技术栈。</span>
+<span class="g"> 请先问我几个问题来了解需求和限制条件，</span>
+<span class="g"> 然后再给出方案建议。"</span>
+
+<span class="c"># Claude 可能会问：</span>
+<span class="c"># - 数据量大概多大？多久更新一次？</span>
+<span class="c"># - 有多少人使用？需要登录吗？</span>
+<span class="c"># - 你熟悉哪些编程语言？</span>
+<span class="c"># - 部署在内网还是公网？</span>
+<span class="c"># - 数据来源是数据库还是 Excel/CSV？</span></pre>
+</div>
+
+<h3>分步执行</h3>
+<p>避免一次性给出复杂需求。拆分成小步骤，每步确认后再继续。</p>
+
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">分步示例</span></div>
+<pre><span class="c"># Step 1: 要方案不要代码</span>
+<span class="g">"我要做一个 CSV 转 Markdown 的 CLI 工具。</span>
+<span class="g"> 先说你打算怎么实现，列出文件结构和步骤。"</span>
+
+<span class="c"># Step 2: 确认后执行</span>
+<span class="g">"方案可以，开始第一步：初始化项目结构。"</span>
+
+<span class="c"># Step 3: 逐步推进</span>
+<span class="g">"实现核心转换逻辑。"</span>
+
+<span class="c"># Step 4: 补充测试</span>
+<span class="g">"为转换函数写 pytest 测试。"</span></pre>
+</div>
+
+<h3>技巧清单</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>技巧</th><th>示例</th></tr></thead>
+<tbody>
+<tr><td>明确技术约束</td><td>"用 dataclasses 而不是 dict"</td></tr>
+<tr><td>要求先规划</td><td>"先说方案，不要直接写代码"</td></tr>
+<tr><td>让 AI 反问</td><td>"我不确定方案，先问我几个问题"</td></tr>
+<tr><td>限定范围</td><td>"只改 utils.py，不要动其他文件"</td></tr>
+<tr><td>要求解释</td><td>"改完后解释为什么这样改"</td></tr>
+<tr><td>迭代修改</td><td>一个功能完成再做下一个</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #6</div>
+<h4>反问式 Prompt 确定方案</h4>
+<ol>
+  <li>想一个你工作中实际遇到的小需求</li>
+  <li>在 Claude Code 中描述需求，并说 <em>"我不确定最佳方案，请先问我几个问题"</em></li>
+  <li>回答 Claude 的提问，评估它给出的方案</li>
+</ol>
+<div class="handson-time">⏱️ 5 分钟</div>
+</div>
+
+<!-- ========== 实战 ========== -->
+<h2 id="project"><span class="num">09</span> 实战：从零构建一个小项目</h2>
+
+<h3>选一个方向</h3>
+<div class="cards">
+<div class="card">
+  <h4>A · CLI 工具</h4>
+  <p>CSV → Markdown 表格转换器</p>
+  <span class="tag tag-a">通用</span>
+</div>
+<div class="card">
+  <h4>B · REST API</h4>
+  <p>FastAPI 待办事项 CRUD 接口</p>
+  <span class="tag tag-b">Web 基础</span>
+</div>
+<div class="card">
+  <h4>C · 数据脚本</h4>
+  <p>数据清洗，处理脏 CSV 并输出报告</p>
+  <span class="tag tag-g">数据方向</span>
+</div>
+</div>
+
+<h3>步骤</h3>
+<div class="timeline">
+<div class="tl-item">
+  <strong>Step 1 · 初始化</strong>
+  <p>项目结构、配置文件</p>
+  <span class="prompt">"创建 Python 项目，包含 src/、tests/、pyproject.toml"</span>
+</div>
+<div class="tl-item">
+  <strong>Step 2 · 核心逻辑</strong>
+  <p>主要功能实现</p>
+  <span class="prompt">"实现 CSV 读取和 Markdown 表格生成"</span>
+</div>
+<div class="tl-item">
+  <strong>Step 3 · 错误处理</strong>
+  <p>边界情况覆盖</p>
+  <span class="prompt">"添加文件不存在、编码错误的异常处理"</span>
+</div>
+<div class="tl-item">
+  <strong>Step 4 · 测试</strong>
+  <p>编写并运行</p>
+  <span class="prompt">"写 pytest 测试，覆盖正常和异常路径"</span>
+</div>
+<div class="tl-item">
+  <strong>Step 5 · 调试</strong>
+  <p>自动修复</p>
+  <span class="prompt">"运行测试，修复所有失败的用例"</span>
+</div>
+<div class="tl-item">
+  <strong>Step 6 · 提交</strong>
+  <p>版本记录</p>
+  <span class="prompt">"写 commit message 并提交"</span>
+</div>
+</div>
+
+<div class="handson">
+<div class="handson-tag">Hands-on #7 · 主实战</div>
+<h4>完成一个小项目</h4>
+<p>选择一个方向，按 Step 1-6 进行。全程使用 Claude Code，每步 review 输出。</p>
+<ul>
+  <li>Claude 犯错时尝试用更精确的描述引导修正</li>
+  <li>中途 <code>/cost</code> 查看消耗</li>
+  <li>完成后 <code>git log --oneline</code> 查看提交历史</li>
+</ul>
+<div class="handson-time">⏱️ 15 分钟</div>
+</div>
+
+<div class="discuss">
+<div class="discuss-label">讨论</div>
+<p>Claude 在哪一步表现好 / 不好？你是怎么引导它修正的？</p>
+</div>
+
+<!-- ========== 进阶 ========== -->
+<h2 id="deep"><span class="num">10</span> Agent、Context 与扩展机制</h2>
+
+<h3>Claude Code 的工作原理</h3>
+<p>Claude Code 是一个 <strong>Agent 循环</strong>：接收任务 → 选择工具（读文件、写文件、执行命令）→ 执行 → 观察结果 → 决定下一步 → 循环到完成。它不是一次性生成代码，而是逐步推进，每步基于前一步的结果判断。</p>
+
+<h3>Context（上下文窗口）</h3>
+<p>Claude 的上下文窗口有限。对话过长或项目文件太多时，早期信息可能被截断。管理方式：</p>
+<ul>
+  <li><code>/compact</code> 压缩对话历史</li>
+  <li><code>.claudeignore</code> 排除不相关的大文件</li>
+  <li>CLAUDE.md 每次加载会占用上下文空间，保持精简</li>
+  <li>MCP 服务器也消耗上下文，不用的断开</li>
+</ul>
+
+<h3>Skills</h3>
+<p>Markdown 格式的指令文件，定义可复用的知识或工作流。通过斜杠命令调用，或由 Claude 自动加载。适合将重复性任务标准化。</p>
+
+<h3>Subagents</h3>
+<p>独立的子代理，拥有各自的上下文，不继承主会话历史。适合并行处理多个模块或隔离不需要完整上下文的任务。</p>
+
+<h3>MCP（Model Context Protocol）</h3>
+<p>连接外部服务的协议。每个 MCP 服务器暴露一组工具，Claude 在会话中调用。</p>
+
+<div class="term">
+<div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">Terminal — zsh</span></div>
+<pre><span class="p">$ </span><span class="g">claude</span> mcp install <span class="b">@anthropic-ai/mcp-server-github</span>
+<span class="p">$ </span><span class="g">claude</span> mcp install <span class="b">@anthropic-ai/mcp-server-filesystem</span>
+<span class="g">/mcp</span>   <span class="c"># 查看已连接的 MCP 服务器</span></pre>
+</div>
+
+<h3>Hooks</h3>
+<p>在特定生命周期事件前后执行自定义脚本，配置在 <code>.claude/settings.json</code> 中。</p>
+
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>事件</th><th>触发时机</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>PreToolUse</code></td><td>工具执行前</td><td>拦截危险命令</td></tr>
+<tr><td><code>PostToolUse</code></td><td>工具执行后</td><td>自动格式化</td></tr>
+<tr><td><code>SessionStart</code></td><td>会话启动</td><td>环境检查</td></tr>
+<tr><td><code>SessionEnd</code></td><td>会话结束</td><td>清理、日志</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>扩展机制对比</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>机制</th><th>作用</th><th>上下文开销</th></tr></thead>
+<tbody>
+<tr><td><strong>CLAUDE.md</strong></td><td>持久项目规则，每次自动加载</td><td>每次加载</td></tr>
+<tr><td><strong>Skills</strong></td><td>可复用知识/工作流，按需加载</td><td>调用时加载</td></tr>
+<tr><td><strong>MCP</strong></td><td>连接外部服务</td><td>连接时消耗</td></tr>
+<tr><td><strong>Subagents</strong></td><td>隔离任务，独立上下文</td><td>不影响主会话</td></tr>
+<tr><td><strong>Hooks</strong></td><td>自动化脚本</td><td>零（外部脚本）</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ========== 收尾 ========== -->
+<h2 id="end"><span class="num">11</span> 总结与资源</h2>
+
+<h3>内容回顾</h3>
+<div class="cards">
+<div class="card"><h4>Shell & Git</h4><p>终端操作、版本控制，AI 协作的安全网</p></div>
+<div class="card"><h4>安装 & 操作</h4><p>安装、认证、斜杠命令、交互模式</p></div>
+<div class="card"><h4>项目配置</h4><p>CLAUDE.md、.claudeignore、前后端结构</p></div>
+<div class="card"><h4>Prompt 技巧</h4><p>明确技术栈、反问式规划、分步执行</p></div>
+<div class="card"><h4>Agent 体系</h4><p>Context、Skills、MCP、Subagents、Hooks</p></div>
+</div>
+
+<h3>安全提示</h3>
+<div class="note note-warn">
+<span class="note-icon">⚠️</span>
+<div>
+  <p>Claude Code 可以执行任意终端命令。修改文件前检查 diff，不要在对话中输入 API 密钥或密码。使用 <code>.claudeignore</code> 排除敏感文件。</p>
+</div>
+</div>
+
+<h3>资源</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>资源</th><th>链接</th></tr></thead>
+<tbody>
+<tr><td>Claude Code 官方文档</td><td><a href="https://code.claude.com/docs" target="_blank">code.claude.com/docs</a></td></tr>
+<tr><td>Prompt 工程指南</td><td><a href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank">docs.claude.com</a></td></tr>
+<tr><td>awesome-claude-code</td><td><a href="https://github.com/hesreallyhim/awesome-claude-code" target="_blank">GitHub</a></td></tr>
+<tr><td>Anthropic 博客</td><td><a href="https://www.anthropic.com/news" target="_blank">anthropic.com/news</a></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>课后练习</h3>
+<div class="timeline">
+<div class="tl-item">
+  <strong>入门</strong>
+  <p>用 Claude Code 为现有项目补充 README 和 CLAUDE.md</p>
+</div>
+<div class="tl-item">
+  <strong>进阶</strong>
+  <p>配置 MCP 服务器，完成一次带版本控制的 feature 开发</p>
+</div>
+<div class="tl-item">
+  <strong>挑战</strong>
+  <p>编写 PostToolUse Hook，文件修改后自动运行 linter</p>
+</div>
+</div>
+
+<div class="discuss">
+<div class="discuss-label">开放讨论</div>
+<p>Claude Code 可能适用你工作中的哪些场景？有什么它做不好的事情？对 AI 辅助开发有什么想法？</p>
+</div>
+
+</article>
+</div>
+
+<footer>
+<p>Built with Claude · <a href="https://code.claude.com" target="_blank">code.claude.com</a></p>
+</footer>
+
+<script>
+const pb=document.getElementById('progressBar');
+window.addEventListener('scroll',()=>{const h=document.documentElement;pb.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%'});
+const secs=document.querySelectorAll('h2[id]');
+const links=document.querySelectorAll('.nav-link');
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('active'));const l=document.querySelector(`.nav-link[href="#${e.target.id}"]`);if(l)l.classList.add('active')}})},{rootMargin:'-30% 0px -65% 0px'});
+secs.forEach(s=>obs.observe(s));
+const revs=document.querySelectorAll('.handson,.note,.cards,.term,.tbl-wrap,.discuss,.timeline');
+const ro=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');ro.unobserve(e.target)}})},{threshold:0.05});
+revs.forEach(r=>{r.classList.add('reveal');ro.observe(r)});
+</script>
+</body>
+</html>
